@@ -22,27 +22,25 @@ def solve(sam_lines, transToSeq, tid_regions):
         cigar.reverse() #stack
         regInd = 0
         curr = line.clipped_pos
-
         #In which region does it start
         last = 0
         while last + regions[regInd][1] - regions[regInd][0] + 1 < curr:
             last += regions[regInd][1] - regions[regInd][0] + 1
             regInd = regInd + 1
 
-        posOnRef = regions[regInd][0] + curr - last
+        posOnRef = regions[regInd][0] + curr - 1
+
         newCigar = ""
-        regionSize = regions[regInd][1] - posOnRef + 1
+        regionSize = regions[regInd][1] - regions[regInd][0] + 1
+
         # last = 0
         while cigar:
             c,op = cigar.pop()
             count = int(c)
             if count + curr > regionSize + last:
-                # take = regions[re gInd][1] - regions[regInd][0] + 1 + last - curr
-                # carry = max(count - (regionSize + last - curr), 0)
-                take = min(count, regionSize + last - curr)
+                take = min(count, regionSize + last - curr + 1)
                 #stavi intron
                 if regInd < len(regions) - 1:
-                    # print "intron: " + line.rname
                     if take > 0:
                         newCigar += str(take) + op
                     if count - take > 0:
