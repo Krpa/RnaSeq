@@ -3,6 +3,7 @@ import sys
 CHUNK_LENGTH = 60
 T_ID = "transcript_id"
 LOOK_S = False
+ALT = False
 
 class Exon:
     """
@@ -10,7 +11,7 @@ class Exon:
     https://genome.ucsc.edu/FAQ/FAQformat.html#format4
     """
     def __init__(self, seqname, source, feature, start, end, score, strand, frame, attribute):
-        self.seqname = seqname
+        self.seqname = seqname.split(" ")[0]
         self.source = source
         self.feature = feature
         self.start = int(start)
@@ -97,6 +98,25 @@ def makeRegions(tid_exons):
         tid_regions[tid] = regions
     return tid_regions
 
+def altSplicing(regions):
+    """
+    Generator for alternative splicing of given exons.
+    Yields a list of regions and a suffix representing the bitmask
+    used for splicing.
+    """
+    M = len(regions)
+    N = (1 << M) - 1
+    for i in range(1, N):
+        suff = ""
+        nextRegions = []
+        for j in range(0, M):
+            if i & (1 << j) != 0:
+                suff += '1'
+                nextRegions.append(regions[j])
+            else:
+                suff += '0'
+        yield (nextRegions, suff[::-1])
+
 def makeTranscript(seq, regions, strand):
     """
     Extracts all regions from a sequence.
@@ -129,11 +149,16 @@ def solveSeq(out_fasta, header, seq, toSolve, tid_regions, transToSeq):
     Matches transcripts to given sequence, extracts them and
     writes them to a file.
     """
-    transcripts = [ind for ind in toSolve if header[1:].startswith(transToSeq[ind][0])]
+    name = header[1::].split(" ")[0]
+    transcripts = [ind for ind in toSolve if name == transToSeq[ind][0]]
     for t in transcripts:
         tm = makeTranscript(seq, tid_regions[t], transToSeq[t][1])
         writeTranscript(out_fasta, ">" + t, tm)
-    return [ind for ind in toSolve if not header[1:].startswith(transToSeq[ind][0])]
+        if ALT:
+            for regs, suff in altSplicing(tid_regions[t]):
+                tm = makeTranscript(seq, regs, transToSeq[t][1])
+                writeTranscript(out_fasta, ">" + t + "_" + suff + " A", tm)
+    return [ind for ind in toSolve if not name == transToSeq[ind][0]]
 
 def solveFASTA(in_fasta, out_fasta, tid_regions, transToSeq):
     """
@@ -164,22 +189,22 @@ def count(dict):
 
 if __name__ == "__main__":
     if len(sys.argv) < 4:
-        print "Error - 3 arguments needed: in.gtf in.fa out.fa [flag]"
+        print "Error - 3 arguments needed: in.gtf in.fa out.fa [flag1, flag2...]"
         sys.exit(0)
 
-    if len(sys.argv) > 4 and sys.argv[4] == "S":
-        LOOK_S = True
+    for arg in sys.argv[3::]:
+        if arg == 's':
+            LOOK_S = True
+        elif arg == 'alt':
+            ALT = True
+
 
     gff = open(sys.argv[1])
     tid_exons, transToSeq = parse(gff)
     gff.close()
 
     tid_regions = makeRegions(tid_exons)
-    #
-    print "transcripts: " + str(len(transToSeq))
-    print "exons: " + str(count(tid_exons))
-    print "regions: " + str(count(tid_regions))
-    #
+
     in_fasta = open(sys.argv[2])
     out_fasta = open(sys.argv[3],'w')
     solveFASTA(in_fasta, out_fasta, tid_regions, transToSeq)
