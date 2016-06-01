@@ -24,19 +24,19 @@ def solve(sam_lines, transToSeq, tid_regions):
         curr = line.clipped_pos
 
         #In which region does it start
-        size = 0
-        while size + regions[regInd][1] - regions[regInd][0] + 1 < curr:
-            size += regions[regInd][1] - regions[regInd][0] + 1
+        last = 0
+        while last + regions[regInd][1] - regions[regInd][0] + 1 < curr:
+            last += regions[regInd][1] - regions[regInd][0] + 1
             regInd = regInd + 1
 
-        posOnRef = regions[regInd][0] + curr - size
+        posOnRef = regions[regInd][0] + curr - last
         newCigar = ""
         regionSize = regions[regInd][1] - posOnRef + 1
-        last = 0
+        # last = 0
         while cigar:
             c,op = cigar.pop()
             count = int(c)
-            if count + curr >= regionSize + last:
+            if count + curr > regionSize + last:
                 # take = regions[re gInd][1] - regions[regInd][0] + 1 + last - curr
                 # carry = max(count - (regionSize + last - curr), 0)
                 take = min(count, regionSize + last - curr)
