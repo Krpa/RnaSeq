@@ -115,7 +115,7 @@ def altSplicing(regions):
                 nextRegions.append(regions[j])
             else:
                 suff += '0'
-        yield (nextRegions, suff[::-1])
+        yield (nextRegions, suff)
 
 def makeTranscript(seq, regions, strand):
     """
@@ -197,7 +197,6 @@ if __name__ == "__main__":
             LOOK_S = True
         elif arg == 'alt':
             ALT = True
-
 
     gff = open(sys.argv[1])
     tid_exons, transToSeq = parse(gff)

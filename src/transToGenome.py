@@ -4,6 +4,12 @@ import sys
 import parser
 import re;
 
+def extractRegions(tid, tid_regions):
+    if "_" not in tid:
+        return tid, tid_regions[tid]
+    name,bm = tid.split("_")
+    return name, [region for i, region in enumerate(tid_regions[name]) if bm[i] == '1']
+
 def solve(sam_lines, transToSeq, tid_regions):
     newSam = []
     for line in sam_lines:
@@ -11,7 +17,7 @@ def solve(sam_lines, transToSeq, tid_regions):
             newSam.append(line)
             continue
 
-        regions = tid_regions[line.rname]
+        name, regions = extractRegions(line.rname, tid_regions)
         cigar = line.SplitCigar()
         cigar.reverse() #stack
         regInd = 0
@@ -61,67 +67,16 @@ def solve(sam_lines, transToSeq, tid_regions):
 
         newLine = copy.deepcopy(line);
         newLine.cigar = newCigar
-        newLine.rname = transToSeq[line.rname][0]
+        newLine.rname = transToSeq[name][0]
         m_front = re.match("^([\d]+)([SH])", newCigar)
         newLine.pos = posOnRef
         if m_front:
             newLine.pos += int(m_front.group(1))
-        if transToSeq[line.rname][1] == '-':
+        if transToSeq[name][1] == '-':
             newLine.flag ^= (1 << 0x10)
         newSam.append(newLine)
 
-        # else: unatrag?
-        #     regions.reverse() # - strand
-        #     regInd = 0
-        #     curr = line.clipped_pos
-        #
-        #     #In which region does it start
-        #     size = 0
-        #     while size + regions[regInd][1] - regions[regInd][0] + 1 < curr:
-        #         size += regions[regInd][1] - regions[regInd][0] + 1
-        #         regInd = regInd + 1
-        #
-        #     cigar = line.SplitCigar()
-        #     cigar.reverse() #stack
-        #     newCigar = ""
-        #
-        #     regionSize = regions[regInd][1] - regions[regInd][0] \
-        #         - regions[regInd][0] + curr - size + 1
-        #     last = 0
-        #     posOnRef = 0
-        #     while cigar:
-        #         c,op = cigar.pop()
-        #         count = int(c)
-        #         if count + curr > regionSize + last:
-        #             take = regions[regInd][1] - regions[regInd][0] + last - curr
-        #             newCigar += str(take) + op
-        #             cigar.append((count - take, op))
-        #
-        #             #stavi intron
-        #             newCigar += str(regions[regInd+1][0] - regions[regInd][1]) + 'N'
-        #
-        #             regInd = regInd + 1
-        #             regionSize = regions[regInd][1] - regions[regInd][0]
-        #             curr += take
-        #             last += regions[regInd][1] - regions[regInd][0]
-        #             cigarSegment = []
-        #             posOnRef = regions[regInd][1]
-        #         else:
-        #             posOnRef -= count + 1
-        #             curr += count
-        #             newCigar += str(count) + op
-        #
-        #     newLine = copy.deepcopy(line)
-        #     newLine.cigar = newCigar
-        #     newLine.rname = transToSeq[line.rname][0]
-        #
-        #     m_back = re.match("^([\d]+)([SH])", newCigar)
-        #     if m_back:
-        #         newLine.pos = posOnRef + int(m_front.group(1))
-        #     newSam.append(newLine)
-
     return newSam
-
 
 if __name__ == "__main__":
 
