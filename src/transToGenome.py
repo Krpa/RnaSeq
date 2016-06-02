@@ -51,12 +51,13 @@ def solve(sam_lines, transToSeq, tid_regions):
                     break
 
                 regInd = regInd + 1
+                last += regionSize
                 regionSize = regions[regInd][1] - regions[regInd][0] + 1
-                curr += take
-                last += regions[regInd][1] - regions[regInd][0] + 1
-                cigarSegment = []
+                if op != 'I':
+                    curr += take
             else:
-                curr += count
+                if op != 'I':
+                    curr += count
                 newCigar += str(count) + op
 
         while cigar:
