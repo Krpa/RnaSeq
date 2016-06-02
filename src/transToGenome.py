@@ -72,7 +72,7 @@ def solve(sam_lines, transToSeq, tid_regions):
         if m_front:
             newLine.pos += int(m_front.group(1))
         if transToSeq[name][1] == '-':
-            newLine.flag ^= (1 << 0x10)
+            newLine.flag ^= 0x10
         newSam.append(newLine)
 
     return newSam
