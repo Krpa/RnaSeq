@@ -109,6 +109,6 @@ if __name__ == "__main__":
     for head in headers:
         samOut.write(head + '\n')
     for sam in newSam:
-        samOut.write(" ".join([sam.qname, str(sam.flag), sam.rname, str(sam.pos), \
+        samOut.write("\t".join([sam.qname, str(sam.flag), sam.rname, str(sam.pos), \
             str(sam.mapq), sam.cigar, sam.mrnm, str(sam.mpos), str(sam.isize), sam.seq, sam.qual]) + "\n");
     samOut.close();
