@@ -4,6 +4,21 @@ import sys
 import parser
 import re;
 
+def checkBitMask(name, bitMask, tid_regions):
+    bmLen = sum([1 for c in bitMask if c == '1' or c == '0'])
+    if bmLen == len(bitMask) and bmLen == len(tid_regions[name]):
+        return True
+    return False
+
+def extractRegions2(tid, tid_regions):
+    fields = tid.split("_")
+    if len(fields) != 1:
+        name = "_".join(fields[0:len(fields)-1])
+        bm = fields[-1]
+        if checkBitMask(name, bm, tid_regions):
+            return name, [region for i, region in enumerate(tid_regions[name]) if bm[i] == '1']
+    return tid, tid_regions[tid]
+
 def extractRegions(tid, tid_regions):
     if "_" not in tid:
         return tid, tid_regions[tid]
