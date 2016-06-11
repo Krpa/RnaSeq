@@ -117,17 +117,26 @@ def altSplicing(regions):
                 suff += '0'
         yield (nextRegions, suff)
 
+plus = 0
+minus = 0
+duljina = 0
 def makeTranscript(seq, regions, strand):
     """
     Extracts all regions from a sequence.
     """
+    global plus
+    global minus
+    global duljina
     t = ""
     if strand == '+' or not LOOK_S:
+        plus += 1
         for start, end in regions:
             t = t + seq[start-1:end]
     else:
+        minus += 1
         for start, end in reversed(regions):
             t = t + complementString(seq[start-1:end][::-1])
+    duljina += len(t)
     return t
 
 def chunks(string):
@@ -209,3 +218,8 @@ if __name__ == "__main__":
     solveFASTA(in_fasta, out_fasta, tid_regions, transToSeq)
     in_fasta.close()
     out_fasta.close()
+
+    print "plus: " + str(plus)
+    print "minus: " + str(minus)
+    print "duljina: " + str(duljina)
+    

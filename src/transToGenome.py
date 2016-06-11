@@ -1,7 +1,7 @@
 import utility_sam
 import copy
 import sys
-import parser
+import transExtract
 import re;
 
 def checkBitMask(name, bitMask, tid_regions):
@@ -43,7 +43,7 @@ def solve(sam_lines, transToSeq, tid_regions):
             last += regions[regInd][1] - regions[regInd][0] + 1
             regInd = regInd + 1
 
-        posOnRef = regions[regInd][0] + curr - 1
+        posOnRef = regions[regInd][0] + curr - last - 1
 
         newCigar = ""
         regionSize = regions[regInd][1] - regions[regInd][0] + 1
@@ -86,8 +86,8 @@ def solve(sam_lines, transToSeq, tid_regions):
         newLine.pos = posOnRef
         if m_front:
             newLine.pos += int(m_front.group(1))
-        if transToSeq[name][1] == '-':
-            newLine.flag ^= 0x10
+        # if transToSeq[name][1] == '-':
+        #     newLine.flag ^= 0x10
         newSam.append(newLine)
 
     return newSam
@@ -100,9 +100,9 @@ if __name__ == "__main__":
 
     headers, sam_lines = utility_sam.LoadSAM(sys.argv[1])
     gtf = open(sys.argv[2])
-    tid_exons, transToSeq = parser.parse(gtf)
+    tid_exons, transToSeq = transExtract.parse(gtf)
     gtf.close()
-    tid_regions = parser.makeRegions(tid_exons)
+    tid_regions = transExtract.makeRegions(tid_exons)
 
     newSam = solve(sam_lines, transToSeq, tid_regions)
     samOut = open(sys.argv[3], "w")
