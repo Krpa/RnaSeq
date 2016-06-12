@@ -36,7 +36,7 @@ def solve(sam_lines, transToSeq, tid_regions):
         cigar = line.SplitCigar()
         cigar.reverse() #stack
         regInd = 0
-        curr = line.clipped_pos
+        curr = line.pos
         #In which region does it start
         last = 0
         while last + regions[regInd][1] - regions[regInd][0] + 1 < curr:
@@ -49,17 +49,19 @@ def solve(sam_lines, transToSeq, tid_regions):
         regionSize = regions[regInd][1] - regions[regInd][0] + 1
 
         # last = 0
+        curr -= 1
         while cigar:
             c,op = cigar.pop()
             count = int(c)
+            if op == 'I' or op == 'S' or op == 'H':
+                newCigar += str(count) + op
+                continue
             if count + curr > regionSize + last:
-                take = min(count, regionSize + last - curr + 1)
-                #stavi intron
+                take = regionSize + last - curr
                 if regInd < len(regions) - 1:
                     if take > 0:
                         newCigar += str(take) + op
-                    if count - take > 0:
-                        cigar.append((count - take, op))
+                    cigar.append((count - take, op))
                     newCigar += str(regions[regInd+1][0] - regions[regInd][1] - 1) + 'N'
                 else:
                     newCigar += str(c) + op
@@ -68,11 +70,9 @@ def solve(sam_lines, transToSeq, tid_regions):
                 regInd = regInd + 1
                 last += regionSize
                 regionSize = regions[regInd][1] - regions[regInd][0] + 1
-                if op != 'I':
-                    curr += take
+                curr += take
             else:
-                if op != 'I':
-                    curr += count
+                curr += count
                 newCigar += str(count) + op
 
         while cigar:
@@ -82,10 +82,7 @@ def solve(sam_lines, transToSeq, tid_regions):
         newLine = copy.deepcopy(line);
         newLine.cigar = newCigar
         newLine.rname = transToSeq[name][0]
-        m_front = re.match("^([\d]+)([SH])", newCigar)
         newLine.pos = posOnRef
-        if m_front:
-            newLine.pos += int(m_front.group(1))
         # if transToSeq[name][1] == '-':
         #     newLine.flag ^= 0x10
         newSam.append(newLine)
